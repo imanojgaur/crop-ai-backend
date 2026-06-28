@@ -1,39 +1,43 @@
-from flask import Flask, request, jsonify
 import pickle
 import numpy as np
+from fastapi import FastAPI
+from pydantic import BaseModel, Field
 
-app = Flask(__name__)
+# 1. Initialize the FastAPI instance (ASGI application)
+app = FastAPI(title="Crop Recommendation AI API")
 
-# 1. Load the AI Brain into RAM
-model_path = 'Crop_Recommendation.pkl'
-model = pickle.load(open(model_path, 'rb'))
+# 2. Define the Pydantic Data Validation Model
+class CropPredictionRequest(BaseModel):
+    N: float = Field(description="Nitrogen content in soil")
+    P: float = Field(description="Phosphorous content in soil")
+    K: float = Field(description="Potassium content in soil")
+    temperature: float = Field(description="Temperature in Celsius")
+    humidity: float = Field(description="Relative humidity in %")
+    ph: float = Field(description="pH value of the soil")
+    rainfall: float = Field(description="Rainfall in mm")
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    try:
-        # 2. Get the data from Next.js
-        data = request.get_json()
-        
-        # 3. Extract the 7 values
-        features = np.array([[
-            data['N'], 
-            data['P'], 
-            data['K'], 
-            data['temperature'], 
-            data['humidity'], 
-            data['ph'], 
-            data['rainfall']
-        ]])
-        
-        # 4. Make Prediction
-        prediction = model.predict(features)
-        
-        # 5. Send back to Next.js
-        return jsonify({'recommended_crop': prediction[0]})
-        
-    except Exception as e:
-        return jsonify({'error': str(e)})
+# 3. Load the AI Model into RAM once when the server starts
+MODEL_PATH = 'Crop_Recommendation.pkl'
+with open(MODEL_PATH, 'rb') as file:
+    ml_model = pickle.load(file)
 
-if __name__ == '__main__':
-    # Run on port 5000
-    app.run(host='0.0.0.0', port=5000, debug=True)
+# 4. Define the POST Route Handler
+@app.post("/predict")
+def predict_crop(payload: CropPredictionRequest):
+    
+    # Extract features in the correct order for Scikit-Learn
+    features = np.array([[
+        payload.N,
+        payload.P,
+        payload.K,
+        payload.temperature,
+        payload.humidity,
+        payload.ph,
+        payload.rainfall
+    ]])
+    
+    # 5. Make the AI Prediction
+    prediction = ml_model.predict(features)
+    
+    # 6. Return standard Python dictionary (FastAPI automatically converts to JSON)
+    return {'recommended_crop': prediction[0]}
