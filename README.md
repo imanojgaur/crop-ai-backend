@@ -5,9 +5,9 @@
 ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
 
-A high-performance Machine Learning API that predicts the optimal crop to plant based on soil metrics and environmental conditions. 
+Machine Learning API that predicts the optimal crop to plant based on soil metrics and environmental conditions. 
 
-*If you are looking for the frontend interface, please visit the [Next.js Frontend interface](https://dap-plant-app.vercel.app/services/crop-recommend) and for repository [Next.js frontend repository](https://github.com/imanojgaur/DAP)*
+*If you are looking for the frontend interface, please visit the [`Next.js Frontend`](https://dap-plant-app.vercel.app/services/crop-recommend) and for repository [`Next.js frontend repository`](https://github.com/imanojgaur/DAP)*
 
 ## 📖 Table of Contents
 - [About the Project](#-about-the-project)
@@ -17,6 +17,7 @@ A high-performance Machine Learning API that predicts the optimal crop to plant 
 - [API Reference](#-api-reference)
 - [Local Development Setup](#-local-development-setup)
 - [Directory Structure](#-directory-structure)
+- [Acknowledgement & Credits](#-acknowledgments--credits)
 - [Contributing](#-contributing)
 
 ---
@@ -41,7 +42,9 @@ This repository houses the modernized backend, which was recently upgraded from 
 
 * **Strict Type Validation:** 
 - Integrated **Pydantic Schema** to validate incoming JSON payloads. 
-- Invalid data types from the frontend are instantly rejected with clean `422 Unprocessable Entity` errors before they can reach or crash the AI model.
+- Invalid data types from the frontend are instantly rejected 
+- API respons with `422 Unprocessable Entity` errors.
+- This way it protect bad data reach or crash the AI model.
 
 * **Server-to-Server Security:** 
 - Implemented a strict Dependency Injection bouncer pattern. 
@@ -62,7 +65,8 @@ This repository houses the modernized backend, which was recently upgraded from 
 
 ## 🔒 Security & Environment Variables
 
-This API is designed to communicate exclusively with a trusted server (e.g., Next.js Server Actions). It does not use CORS. Instead, it relies on a cryptographic API key.
+- This API is designed to communicate exclusively with a trusted server (e.g., Next.js Server Actions). 
+- It does not use CORS. Instead, it relies on a cryptographic API key.
 
 Create a `.env` file in the root directory:
 
@@ -128,7 +132,7 @@ x-api-key: <CROP_BACKEND_SECRET_KEY>
 
 1. **Clone the Repository:**
 ```bash
-git clone [https://github.com/imanojgaur/crop-ai-backend.git](https://github.com/imanojgaur/crop-ai-backend.git)
+git clone https://github.com/imanojgaur/crop-ai-backend.git
 cd crop-ai-backend
 
 ```
@@ -186,6 +190,11 @@ Open your browser and navigate to `http://localhost:8000/docs` to test the API d
 ```
 
 ---
+
+## 🤝 Acknowledgments & Credits
+* **Dataset:** The agricultural data (`Crop_NPK.csv` and `crop_recommendation.csv`) used to train the machine learning model was originally sourced from [`Amanul Rahiman Shamshuddin Attar`](https://github.com/amanattar/crop). 
+* **Architecture:** The backend infrastructure was completely re-engineered from legacy Flask to a modern, asynchronous FastAPI microservice by Manoj Gaur.
+
 
 ## 🤝 Contributing
 
