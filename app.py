@@ -17,7 +17,7 @@ class CropPredictionRequest(BaseModel):
     rainfall: float = Field(description="Rainfall in mm")
 
 # 3. Load the AI Model into RAM once
-MODEL_PATH = 'Crop_Recommendation.pkl'
+MODEL_PATH = 'Crop_Recommendation2.pkl'
 try:
     with open(MODEL_PATH, 'rb') as file:
         ml_model = pickle.load(file)

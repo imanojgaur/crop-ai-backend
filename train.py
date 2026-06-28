@@ -18,6 +18,6 @@ model.fit(X, y)
 
 print("3. Saving the new modern brain...")
 # This overwrites the old, broken file with your new, modern one
-pickle.dump(model, open('Crop_Recommendation.pkl', 'wb'))
+pickle.dump(model, open('Crop_Recommendation2.pkl', 'wb'))
 
-print("✅ Success! The new Crop_Recommendation.pkl is ready.")
+print("✅ Success! The new Crop_Recommendation2.pkl is ready.")
