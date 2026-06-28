@@ -1,12 +1,22 @@
+import os 
 import pickle
 import numpy as np
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Depends
 from pydantic import BaseModel, Field
+from dotenv import load_dotenv
 
-# 1. Initialize the FastAPI instance
+# load .env local system.
+load_dotenv()
+
 app = FastAPI(title="Crop Recommendation AI API")
 
-# 2. Define the Pydantic Data Validation Model
+# Fetch or Fallback to None 
+EXPECTED_API_KEY = os.getenv("CROP_BACKEND_SECRET_KEY")
+
+if not EXPECTED_API_KEY:
+    raise RuntimeError("CRITICAL: CROP_BACKEND_SECRET_KEY environment variable is not set!")
+
+# Data Validation Model
 class CropPredictionRequest(BaseModel):
     N: float = Field(description="Nitrogen content in soil")
     P: float = Field(description="Phosphorous content in soil")
@@ -16,7 +26,7 @@ class CropPredictionRequest(BaseModel):
     ph: float = Field(description="pH value of the soil")
     rainfall: float = Field(description="Rainfall in mm")
 
-# 3. Load the AI Model into RAM once
+# Load ai
 MODEL_PATH = 'Crop_Recommendation2.pkl'
 try:
     with open(MODEL_PATH, 'rb') as file:
@@ -24,8 +34,18 @@ try:
 except FileNotFoundError:
     raise RuntimeError(f"CRITICAL ERROR: Model file {MODEL_PATH} not found. Did you run train.py?")
 
-# 4. Define the POST Route Handler (Standard 'def' for CPU-bound threadpooling)
-@app.post("/predict")
+
+# The Security Bouncer Function              |fallback
+def verify_api_key(x_api_key: str = Header(None, alias="x-api-key")):
+    if x_api_key != EXPECTED_API_KEY:
+        raise HTTPException(
+            status_code=401, 
+            detail="Unauthorized. Missing or invalid API key."
+        )
+    return x_api_key
+
+# handle next.js DAP req only.
+@app.post("/predict", dependencies=[Depends(verify_api_key)])
 def predict_crop(payload: CropPredictionRequest):
     try:
         # Extract features in the correct order for Scikit-Learn
@@ -39,14 +59,13 @@ def predict_crop(payload: CropPredictionRequest):
             payload.rainfall
         ]])
         
-        # Make the AI Prediction
+        # Make AI Prediction
         prediction = ml_model.predict(features)
         
         return {'recommended_crop': prediction[0]}
         
     except Exception as e:
         # If ANYTHING goes wrong in the math or numpy, catch it here.
-        # It throws a clean 500 error to the user and prints the exact python error message.
         raise HTTPException(
             status_code=500, 
             detail=f"The AI model encountered an internal error: {str(e)}"
