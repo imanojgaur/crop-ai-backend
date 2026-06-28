@@ -1,145 +1,213 @@
-Greetings Traveler,  
-Grim-terface v2.7 🧙‍♂️
+# 🌱 Intelligent Crop Recommendation Engine 
 
-Let’s begin our coding quest! Below is the complete `README.md` file for the "Intelligent Crop Recommendation Portal" repository.
+![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)
+![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![Scikit-Learn](https://img.shields.io/badge/scikit--learn-%23F7931E.svg?style=for-the-badge&logo=scikit-learn&logoColor=white)
+![Pandas](https://img.shields.io/badge/pandas-%23150458.svg?style=for-the-badge&logo=pandas&logoColor=white)
 
-* * *
+A high-performance Machine Learning API that predicts the optimal crop to plant based on soil metrics and environmental conditions. 
 
-# Intelligent Crop Recommendation Portal 🌾
+*If you are looking for the frontend interface, please visit the [Next.js Frontend interface](https://dap-plant-app.vercel.app/services/crop-recommend) and for repository [Next.js frontend repository](https://github.com/imanojgaur/DAP)*
 
-This repository hosts the Intelligent Crop Recommendation Portal, a machine learning-powered web application designed to assist farmers and agricultural specialists in selecting the best crops and fertilizers based on soil characteristics and environmental parameters. Developed by Aman Attar, this project leverages nutrient data and predictive models to make insightful agricultural recommendations.
-
-For a detailed report on the project's development, please refer to the [Medium Article](https://amanattar.medium.com/intelligent-crop-recommendation-portal-using-ml-c081dd37fdaf).
-
----
-
-## Table of Contents
-- [About the Project](#about-the-project)
-- [Features](#features)
-- [Directory Structure](#directory-structure)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Contributing](#contributing)
-- [License](#license)
+## 📖 Table of Contents
+- [About the Project](#-about-the-project)
+- [Architectural Upgrades](#-architectural-upgrades-flask-vs-fastapi)
+- [Tech Stack](#️-tech-stack)
+- [Security & Environment Variables](#-security--environment-variables)
+- [API Reference](#-api-reference)
+- [Local Development Setup](#-local-development-setup)
+- [Directory Structure](#-directory-structure)
+- [Contributing](#-contributing)
 
 ---
 
-## About the Project
+## 🎯 About the Project
 
-The Intelligent Crop Recommendation Portal is a web-based recommendation system aimed at improving crop yield and fertilizer application by utilizing machine learning models. By analyzing soil nutrient levels and environmental factors, the portal provides recommendations on the most suitable crops, as well as optimal fertilizers and pesticides, fostering sustainable agricultural practices.
-
----
-
-## Features
-
-- **Crop Recommendation:** Suggests the best crops based on soil nutrient content and environmental data.
-- **Fertilizer Recommendation:** Provides fertilizer suggestions tailored to crop types and soil characteristics.
-- **Pesticide Guidance:** Recommends pesticides for managing common pests.
-- **Data Visualization:** Offers visual insights on soil nutrients and crop recommendations.
-- **User-Friendly Web Application:** Interactive interface for easy access to recommendations and information.
+- The Intelligent Crop Recommendation engine is a modern backend microservice
+- Its aim is precise agricultural decision-making. 
+- It analyzing soil nutrient levels (N, P, K) and environmental factors (Temperature, Humidity, pH, Rainfall), 
+- The API serves real-time machine learning predictions on the most suitable crops to maximize yield.
 
 ---
 
-## Directory Structure
+## 🚀 Architectural Upgrades (Flask vs. FastAPI)
 
-### Data Directory
-- **Crop_NPK.csv** and **crop_recommendation.csv**: Contain nutrient values and recommendations for different crops.
+This repository houses the modernized backend, which was recently upgraded from a legacy Flask architecture to **FastAPI** to achieve production-grade performance and safety:
 
-### Models
-- **cnn_model.ipynb** and **crop_model.ipynb**: Jupyter notebooks for training and evaluating models.
-- **Trained_Model_1.h5**: Saved model file used for crop and fertilizer recommendations.
+* **ASGI Thread-Pooling:** 
+- Replaced Flask's blocking WSGI architecture. 
+- CPU-heavy Scikit-Learn predictions (`.predict()`) are automatically offloaded to background thread.
+- It keeps the main event loop 100% unblocked for concurrent web traffic.
 
-### Application Files
-- **app.py**: Main application file, likely a Flask app for running the web server.
-- **requirements.txt** and **runtime.txt**: Specify Python dependencies and runtime requirements.
+* **Strict Type Validation:** 
+- Integrated **Pydantic Schema** to validate incoming JSON payloads. 
+- Invalid data types from the frontend are instantly rejected with clean `422 Unprocessable Entity` errors before they can reach or crash the AI model.
 
-### Frontend
-- **Static**: Contains CSS, JavaScript, and image resources for the web application's front end.
-- **Templates**: HTML templates such as `CropRecommendation.html` and `FertilizerRecommendation.html` for rendering the crop and fertilizer recommendation views.
-
-### Utils Directory
-- **fertilizer.py**: Contains utility functions for suggesting fertilizers based on crop nutrient requirements.
+* **Server-to-Server Security:** 
+- Implemented a strict Dependency Injection bouncer pattern. 
+- The API is locked down behind a required `x-api-key` header
+- This ensures only authorized servers (like our Next.js frontend) can trigger the AI math.
 
 ---
 
-## Installation
+## 🛠️ Tech Stack
 
-Follow these steps to set up and run the application locally.
+* **Framework:** FastAPI (Python)
+* **Machine Learning:** Scikit-Learn (Random Forest Classifier)
+* **Data Processing:** NumPy, Pandas
+* **Model Serialization:** Pickle
+* **Security:** `python-dotenv`, HTTP Header Authentication
+
+---
+
+## 🔒 Security & Environment Variables
+
+This API is designed to communicate exclusively with a trusted server (e.g., Next.js Server Actions). It does not use CORS. Instead, it relies on a cryptographic API key.
+
+Create a `.env` file in the root directory:
+
+```env
+# A secure 64-character hex string
+CROP_BACKEND_SECRET_KEY=your_generated_secret_key_here
+
+```
+
+> **Note:** The server includes a self-destruct tripwire. If this environment variable is missing on boot, the server will intentionally crash via `RuntimeError` to prevent deploying an unprotected endpoint to production.
+
+---
+
+## 📡 API Reference
+
+### Predict Crop
+
+Predicts the best crop based on 7 environmental features.
+
+**Endpoint:** `POST /predict`
+
+**Headers Required:**
+
+```http
+Content-Type: application/json
+x-api-key: <CROP_BACKEND_SECRET_KEY>
+
+```
+
+**Request Body (JSON):**
+
+```json
+{
+  "N": 90.0,
+  "P": 42.0,
+  "K": 43.0,
+  "temperature": 20.8,
+  "humidity": 82.0,
+  "ph": 6.5,
+  "rainfall": 202.9
+}
+
+```
+
+**Success Response (200 OK):**
+
+```json
+{
+  "recommended_crop": "rice"
+}
+
+```
+
+**Error Responses:**
+
+* `401 Unauthorized`: The `x-api-key` header is missing or incorrect.
+* `422 Unprocessable Entity`: The JSON payload is missing fields or contains invalid data types.
+* `500 Internal Server Error`: The AI model encountered a critical math or NumPy failure.
+
+---
+
+## 💻 Local Development Setup
 
 1. **Clone the Repository:**
-   ```bash
-   git clone https://github.com/amanattar/crop
-   cd crop
-    ```
+```bash
+git clone [https://github.com/imanojgaur/crop-ai-backend.git](https://github.com/imanojgaur/crop-ai-backend.git)
+cd crop-ai-backend
 
-2.  **Install Dependencies:**  
-    Ensure Python is installed, then run:
-    
-    ```bash
-    pip install -r requirements.txt
-    ```
-    
-3.  **Run the Application:**
-    
-    ```bash
-    python app.py
-    ```
-    
-    The app will start on `localhost:5000` by default.
-    
+```
 
-* * *
 
-Usage
------
+2. **Create a virtual environment:**
+```bash
+python -m venv venv
+source venv/bin/activate  # On Windows use: venv\Scripts\activate
 
-1.  **Crop Recommendation:**
-    
-    *   Navigate to the Crop Recommendation page.
-    *   Input soil parameters (NPK values, moisture, temperature, etc.).
-    *   Receive a list of recommended crops based on the provided data.
-2.  **Fertilizer Advice:**
-    
-    *   Use the Fertilizer Recommendation section.
-    *   Input the crop type and soil nutrient needs to get tailored fertilizer suggestions.
-3.  **Pesticide Information:**
-    
-    *   Access information on pest management strategies.
-    *   Find suitable pesticides for common pests based on crop types and region.
+```
 
-* * *
 
-Contributing
-------------
+3. **Install Dependencies:**
+```bash
+pip install -r requirements.txt
+
+```
+
+
+4. **Train the Model (If `.pkl` is missing or dataset is updated):**
+Ensure you have your raw dataset and run the training script to generate the serialized model.
+```bash
+python train.py
+
+```
+
+
+5. **Start the FastAPI Server:**
+```bash
+uvicorn main:app --reload --port 8000
+
+```
+
+
+*The app will start on `localhost:8000`.*
+
+6. **View Interactive Docs:**
+Open your browser and navigate to `http://localhost:8000/docs` to test the API directly using the built-in Swagger UI.
+
+---
+
+## 📁 Directory Structure
+
+```text
+├── Data/
+│   ├── Crop_NPK.csv                  # Raw nutrient values 
+│   └── crop_recommendation.csv       # Training dataset
+├── Crop_Recommendation2.pkl          # Serialized Random Forest Model
+├── main.py                           # Main FastAPI application
+├── train.py                          # ML Training script
+├── requirements.txt                  # Python dependencies
+└── .env                              # Environment variables (Git Ignored)
+
+```
+
+---
+
+## 🤝 Contributing
 
 Contributions are highly encouraged! To get started:
 
-1.  **Fork the Repository** and clone it locally.
-2.  **Create a New Branch** for your feature or bug fix:
-    
-    ```bash
-    git checkout -b feature/YourFeatureName
-    ```
-    
-3.  **Commit Changes** and push to your branch:
-    
-    ```bash
-    git push origin feature/YourFeatureName
-    ```
-    
-4.  **Submit a Pull Request** for review.
+1. **Fork the Repository** and clone it locally.
+2. **Create a New Branch** for your feature or bug fix:
+```bash
+git checkout -b feature/YourFeatureName
 
-* * *
+```
 
-License
--------
 
-This project is licensed under the MIT License. See the `LICENSE` file for more details.
+3. **Commit Changes** and push to your branch:
+```bash
+git push origin feature/YourFeatureName
 
-* * *
+```
 
-With the Intelligent Crop Recommendation Portal, you can easily determine the optimal crops and fertilizers tailored to specific soil and environmental conditions. Whether you are a developer, farmer, or agricultural scientist, we welcome your contributions and feedback to improve the system.
 
-Enjoy farming smarter! 🌱✨
+4. **Submit a Pull Request** for review.
 
-* * *
+---
+
+*Enjoy farming smarter! 🌱✨*
